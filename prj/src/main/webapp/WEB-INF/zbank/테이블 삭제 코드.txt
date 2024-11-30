@@ -1,0 +1,5 @@
+DROP TABLE developer_skill;
+DROP TABLE developer;
+DROP TABLE code_school;
+DROP TABLE code_religion;
+DROP TABLE code_skill;

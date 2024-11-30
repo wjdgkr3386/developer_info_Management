@@ -1,0 +1,42 @@
+CREATE TABLE KING.CODE_RELIGION (
+  RELIGION_CODE    VARCHAR2(3)      primary key, 
+  RELIGION_NAME    VARCHAR2(20)     NOT NULL unique
+);
+CREATE TABLE KING.CODE_SCHOOL (
+  SCHOOL_CODE    VARCHAR2(3)      primary key, 
+  SCHOOL_NAME    VARCHAR2(20)     NOT NULL unique
+);
+CREATE TABLE KING.CODE_SKILL (
+  SKILL_CODE    VARCHAR2(3)      primary key, 
+  SKILL_NAME    VARCHAR2(20)     NOT NULL unique
+);
+CREATE TABLE KING.DEVELOPER (
+  DEVELOPER_NO      NUMBER           primary key, 
+  DEVELOPER_NAME    VARCHAR2(14)     NOT NULL, 
+  JUMIN_NO          VARCHAR2(13)     NOT NULL, 
+  SCHOOL_CODE       VARCHAR2(3)      NOT NULL, 
+  RELIGION_CODE     VARCHAR2(3)      NOT NULL, 
+  GRADUATE_DAY      CHAR(10)         NOT NULL,
+  foreign key(religion_code) references code_religion(religion_code),
+  foreign key(school_code) references code_school(school_code)
+);
+CREATE TABLE KING.DEVELOPER_SKILL (
+  DEVELOPER_NO    NUMBER          NULL, 
+  SKILL_CODE      VARCHAR2(3)     NOT NULL,
+  foreign key(developer_no) references developer(developer_no),
+  foreign key(skill_code) references code_skill(skill_code)
+);
+insert into code_skill(skill_code,skill_name) values( '1', 'Java' );
+insert into code_skill(skill_code,skill_name) values( '2', 'JSP' );
+insert into code_skill(skill_code,skill_name) values( '3', 'ASP' );
+insert into code_skill(skill_code,skill_name) values( '4', 'PHP' );
+insert into code_skill(skill_code,skill_name) values( '5', 'Delphi' );
+insert into code_religion(religion_code,religion_name) values( '1', '기독교' );
+insert into code_religion(religion_code,religion_name) values( '2', '천주교' );
+insert into code_religion(religion_code,religion_name) values( '3', '불교' );
+insert into code_religion(religion_code,religion_name) values( '4', '이슬람' );
+insert into code_religion(religion_code,religion_name) values( '5', '무교' );
+insert into code_school(school_code,school_name) values( '1', '고졸' );
+insert into code_school(school_code,school_name) values( '2', '전문대졸' );
+insert into code_school(school_code,school_name) values( '3', '일반대졸' );
+commit;
