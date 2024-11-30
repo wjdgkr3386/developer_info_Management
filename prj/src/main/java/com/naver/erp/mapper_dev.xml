@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.naver.erp.DevDAO">
+	<sql id="boardWhere">
+						and
+                        d.religion_code=cr.religion_code and ds.skill_code=cs.skill_code and skill_view.developer_no=d.developer_no
+						<if test="keyword!=null and keyword.length()>0">
+			            and 
+			                upper(DEVELOPER_NAME) like upper('%${keyword}%')
+			             </if>  
+			            <if test="gender!=null and gender.size()>0">
+			                 and
+			                     decode(substr(JUMIN_NO, 7,1) ,'1','남' ,'2','여' ,'3','남' ,'4','여') in (
+			             <foreach collection="gender" item="tmp" separator=",">
+			                     #{tmp}
+			             	</foreach>
+			                     )
+			             </if>
+			             <if test="religion!=null and religion.length()>0">
+		             		and
+		             			d.RELIGION_CODE=${religion}
+			             </if>
+			             <if test="education!=null and education.size()>0">  
+			                 and
+			                     SCHOOL_CODE in ( 
+			             <foreach collection="education" item="tmp" separator=",">
+			             	#{tmp}
+			                </foreach> )
+			             </if>
+			             <if test="skill!=null and skill.size()>0">
+			             and
+			             	<foreach collection="skill" item="tmp" open="(" separator=" or " close=")">
+			                   skill_view.skill_code like '%'||#{tmp}||'%'
+			             	</foreach>
+			             </if> 
+			             <if test="graduateYearMin!=null and graduateMonthMin!=null and graduateYearMin.length()>0 and graduateMonthMin.length()>0">
+			                and
+			                    <![CDATA[
+			                  GRADUATE_DAY >= #{graduateYearMin}||#{graduateMonthMin}
+			                 ]]>
+			           </if>
+			           <if test="graduateYearMax!=null and graduateMonthMax!=null and graduateYearMax.length()>0 and graduateMonthMax.length()>0">
+			              and
+			                  <![CDATA[
+			                  GRADUATE_DAY <= #{graduateYearMax}||#{graduateMonthMax}
+			                 ]]>
+			           </if>
+			           <if test="graduateYearMin!=null and graduateYearMax!=null and graduateMonthMin!=null and graduateMonthMax!=null and graduateYearMin.length()>0 and graduateYearMax.length()>0 and graduateMonthMin.length()>0 and graduateMonthMax.length()>0">
+			              and
+			                  GRADUATE_DAY between #{graduateYearMin}||#{graduateMonthMin} AND #{graduateYearMax}||#{graduateMonthMax}
+			           </if>
+	</sql>
+	
+	<select id="checkJumin" parameterType="com.naver.erp.DevDTO" resultType="int">
+		select
+			count(*)
+		from
+			developer
+		where
+			JUMIN_NO=#{jumin1}||#{jumin2}
+	</select>
+	
+	<insert id="insertDev" parameterType="com.naver.erp.DevDTO" >
+		insert into developer(
+			DEVELOPER_NO,
+            DEVELOPER_NAME,
+            JUMIN_NO,
+            SCHOOL_CODE,
+            RELIGION_CODE,
+            GRADUATE_DAY
+		)VALUES(
+			(select nvl(max(developer_no),0)+1 from developer),
+			#{id},
+			#{jumin1}||#{jumin2},
+			#{education},
+			#{religion},
+			#{graduateYear}||#{graduateMonth}||#{graduateDay}
+		)
+	</insert>
+
+	<insert id="insertDevSkill" parameterType="com.naver.erp.DevDTO">
+		insert 
+		into 
+		developer_skill(
+			DEVELOPER_NO,
+			skill_code
+		) 
+		<foreach item="tmp1" collection="skill" separator=" UNION ALL "> 
+		select 
+		<if test="developer_no != null and developer_no > 0">
+			${developer_no}
+		</if>
+		<if test="developer_no == null or developer_no == 0">
+			(select nvl(max(developer_no),0) from developer)
+		</if>,
+			#{tmp1}
+		from
+			dual
+      	</foreach>
+	</insert>
+
+	<select id="search" resultType="java.util.HashMap">
+	select * from ( select  rownum RNUM, zxcvb.* from  (
+
+					select
+                        distinct
+                        d.developer_no as                 "DEVELOPER_NO",
+                        developer_name                  "DEVELOPER_NAME",
+                        jumin_no as                     "JUMIN_NO",
+                        decode(
+                        substr(JUMIN_NO, 7,1)
+                                ,'1','남'
+                                ,'2','여'
+                                ,'3','남'
+                                ,'4','여'
+                        )                               "GENDER",
+                        substr(GRADUATE_DAY, 1,4)||'년'||substr(GRADUATE_DAY, 5,2)||'월'||substr(GRADUATE_DAY, 7,2)||'일'  "GRADUATE_DAY",
+                        religion_name as                "RELIGION",
+                        skill_view.skill as "SKILL",
+                        skill_view.skill_code as "SKILL_CODE" 
+                    from
+                        developer d, code_religion cr, developer_skill ds, code_skill cs,
+                        (SELECT developer_no, LISTAGG(skill_code, ', ') WITHIN GROUP (ORDER BY skill_code) as "SKILL_CODE", LISTAGG(skill_name, ', ') WITHIN GROUP (ORDER BY skill_name) as "SKILL"
+                        FROM (select dskill.developer_no, dskill.skill_code, cskill.skill_name from developer_skill dskill, code_skill cskill where dskill.skill_code=cskill.skill_code)
+                        group by developer_no) skill_view
+                    where
+                    	1=1
+                   		<include refid="boardWhere"/>
+
+		<![CDATA[
+			) zxcvb) where  RNUM  >= ${begin_rowNo}  and RNUM <= ${end_rowNo} order by RNUM asc
+		]]>
+	</select>
+	
+	<select id="searchResultCount" resultType="int">
+		select count(*) from (
+					select
+                        distinct
+                        d.developer_no as                 "DEVELOPER_NO",
+                        developer_name                  "DEVELOPER_NAME",
+                        jumin_no as                     "JUMIN_NO",
+                        decode(
+                        substr(JUMIN_NO, 7,1)
+                                ,'1','남'
+                                ,'2','여'
+                                ,'3','남'
+                                ,'4','여'
+                        )                               "GENDER",
+                        substr(GRADUATE_DAY, 1,4)||'년'||substr(GRADUATE_DAY, 5,2)||'월'||substr(GRADUATE_DAY, 7,2)||'일'  "GRADUATE_DAY",
+                        religion_name as                "RELIGION",
+                        skill_view.skill as "SKILL",
+                        skill_view.skill_code as "SKILL_CODE" 
+                    from
+                        developer d, code_religion cr, developer_skill ds, code_skill cs,
+                        (SELECT developer_no, LISTAGG(skill_code, ', ') WITHIN GROUP (ORDER BY skill_code) as "SKILL_CODE", LISTAGG(skill_name, ', ') WITHIN GROUP (ORDER BY skill_name) as "SKILL"
+                        FROM (select dskill.developer_no, dskill.skill_code, cskill.skill_name from developer_skill dskill, code_skill cskill where dskill.skill_code=cskill.skill_code)
+                        group by developer_no) skill_view
+                    where
+                    	1=1
+                   		<include refid="boardWhere"/>)
+		
+	</select>
+	
+	<select id="devAllCount" resultType="int">
+			select count(*) from 	developer
+	</select>
+
+	<select id="getDev" parameterType="String" resultType="java.util.HashMap">
+	select
+		developer_no as "DEVELOPER_NO"
+		,developer_name as "DEVELOPER_NAME"
+		,jumin_no as "JUMIN_NO"
+		,religion_code as "RELIGION_CODE"
+		,school_code as "SCHOOL_CODE"
+		,graduate_day as "GRADUATE_DAY"
+	from
+		developer
+	where
+		developer_no=${developer_no}
+	</select>	
+	
+	<select id="getDevSkill" parameterType="int" resultType="String">
+        select
+        	SKILL_CODE	as						"SKILL_CODE"
+		from 
+			developer_skill
+		where
+		    developer_no=${developer_no}
+	</select>
+
+	<update id="devUpdate" parameterType="com.naver.erp.DevDTO">
+		update developer set 
+			DEVELOPER_NAME=#{id}
+			,JUMIN_NO=#{jumin1}||#{jumin2}
+			,RELIGION_CODE=${religion}
+			,SCHOOL_CODE=${education}
+			,GRADUATE_DAY=#{graduateYear}||#{graduateMonth}||#{graduateDay}
+		where
+			developer_no=${developer_no}
+	</update>
+
+	<delete id="deleteDevSkill" parameterType="com.naver.erp.DevDTO">
+		delete from
+			developer_skill
+		where
+			DEVELOPER_NO=${developer_no}
+	</delete>
+	
+	<delete id="deleteDev" parameterType="com.naver.erp.DevDTO">
+		delete from
+			developer
+		where
+			DEVELOPER_NO=${developer_no}
+	</delete>
+
+
+
+</mapper>
