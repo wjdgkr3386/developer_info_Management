@@ -12,7 +12,14 @@
 $(function(){init();});
 
 function init(){
-
+    //엔터를 눌렀을때 폼 제출 방지
+    $("[name='searchForm'] input[name='keyword']").on('keydown', function(event) {
+        if (event.key === 'Enter') {
+            //폼 제출 방지
+            event.preventDefault();
+            search();
+        }
+    });
 }
 
 function del_btn(){
@@ -218,7 +225,6 @@ function goDevUpdelForm(developer_no){
 	    </tr>
 	    </c:forEach>
 </table>
-
 </form>
 		<div class="pageNos"> 
 			<span style="cursor:pointer" onClick="pageNoClick(1)">[처음]</span>
@@ -239,7 +245,7 @@ function goDevUpdelForm(developer_no){
 			<span style="cursor:pointer" onClick="pageNoClick(${requestScope.devMap.last_pageNo})">[마지막]</span>
 		</div>
 
-<form name="devUpdelForm" action="/developer_updel_form.do" post="post">
+<form name="devUpdelForm" action="/developer_updel_form.do" method ="post">
 	<input type="hidden" name="developer_no">
 </form>
 

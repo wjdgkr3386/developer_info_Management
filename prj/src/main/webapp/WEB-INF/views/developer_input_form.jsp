@@ -13,19 +13,7 @@
 	
 	$(function(){init();});
 	
-	function init(){		
-		$("[name='id']").val("김정학");
-		$("[name='jumin1']").val("970706");
-		$("[name='jumin2']").val("1411518");
-		$("[name='religion']").val("1");
-		$("[name='education'][value='2']").prop("checked", true);
-	    const defaultSkills = ["1", "2"];
-	    defaultSkills.forEach(skill => {
-	        $("[name='skill'][value='" + skill + "']").prop("checked", true);
-	    });
-	    $("[name='graduateYear']").val("2020");
-	    $("[name='graduateMonth']").val("06");
-	    $("[name='graduateDay']").val("15");
+	function init(){
 	}
 	
 	function saveBtn(){
